@@ -1,14 +1,14 @@
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 from .exceptions import AttributeNotDefined, AttributeNotSet
 
 
 class BaseCacheMeta(ABCMeta):
     def __init__(cls, name, bases, name_space):
-        cls.set_objects()
+        cls.objects = cls.manager(cls)
         super().__init__(name, bases, name_space)
 
 
-class BaseCache(metaclass=BaseCacheMeta):
+class BaseCache:
     name = None
     attrs = []
 
@@ -32,10 +32,6 @@ class BaseCache(metaclass=BaseCacheMeta):
     @property
     def client(self):
         return self.objects.client
-
-    @classmethod
-    def set_objects(cls):
-        cls.objects = cls.manager(cls)
 
     def delete(self):
         self.client.delete(self.key)

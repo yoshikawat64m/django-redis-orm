@@ -1,8 +1,8 @@
-from .base import BaseCache
+from .base import BaseCache, BaseCacheMeta
 from .managers import TextCacheManager, ListCacheManager
 
 
-class TextCache(BaseCache):
+class TextCache(BaseCache, metaclass=BaseCacheMeta):
     """
     Usage
     class ExampleText(TextCache):
@@ -45,7 +45,7 @@ class TextCache(BaseCache):
         self.clear_text()
 
 
-class ListCache(BaseCache):
+class ListCache(BaseCache, metaclass=BaseCacheMeta):
     """
     Usage
     class ExampleList(ListCache):
@@ -66,6 +66,7 @@ class ListCache(BaseCache):
 
     def __init__(self, **attrs):
         self._items = None
+        self._queries = []
         super().__init__(**attrs)
 
     @property
@@ -74,23 +75,31 @@ class ListCache(BaseCache):
             self._items = self.client.get_list(self.key)
         return self._items
 
-    @items.setter
-    def items(self, items):
-        assert type(items) is list
-        self._items = items
+    @property
+    def queries(self):
+        return self._queries
+
+    def add_query(self, item):
+        self._queries.append(item)
+
+    def clear_queries(self):
+        self._queries = []
 
     def clear_items(self):
         self._items = None
 
     def push(self, item):
-        self.client.push_list(self.key, item)
-        self.clear_items()
+        self.add_query(('push', item))
 
     def trim(self, i1, i2):
-        self.client.trim_list(self.key, i1, i2)
-        self.clear_items()
+        self.add_query(('trim', i1, i2))
 
     def save(self, exp=None):
-        assert type(self._items) is list
-        self.client.set(self.key, self._items, exp)
+        for query in self.queries:
+            if query[0] == 'push':
+                self.client.push_list(self.key, query[1])
+            elif query[0] == 'trim':
+                self.client.trim_list(self.key, query[1], query[2])
+
         self.clear_items()
+        self.clear_queries()
