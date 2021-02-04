@@ -18,6 +18,11 @@ class TextCache(BaseCache, metaclass=BaseCacheMeta):
 
     instance = ExampleText.objects.get(organization_id=1)
     instance.text => 'test'
+
+    ExampleText.objects.delete(organization_id=1)
+    ExampleText.objects.exists(organization_id=1) => False
+    instance = ExampleText.objects.get(organization_id=1)
+    instance.text => ''
     """
     manager = TextCacheManager
 
@@ -40,8 +45,7 @@ class TextCache(BaseCache, metaclass=BaseCacheMeta):
         self._text = None
 
     def save(self, exp=None):
-        assert type(self._text) is str
-        self.client.set(self.key, self._text, exp)
+        self.client.set(self.key, self.text, exp)
         self.clear_text()
 
 

@@ -26,7 +26,7 @@ class BaseCache:
             attrvalue = getattr(self, attrname, '')
             if not attrvalue:
                 raise AttributeNotSet('Attribute %s is not set.' % attrname)
-            key += '_' + str(attrvalue)
+            key += '.' + str(attrvalue)
         return key
 
     @property
